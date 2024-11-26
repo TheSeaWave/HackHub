@@ -12,6 +12,7 @@ type Config struct { // что идёт по дефолту, если с кон�
 	Env         string `yaml:"env" env-default:"local"`
 	StoragePath string `yaml:"storage_path" env-required:"true"` // без стораге путя падаем
 	HTTPServer  `yaml:"http_server"`
+	Database    `yaml:"database"` // добавляем блок для базы данных
 }
 
 type HTTPServer struct {
@@ -20,6 +21,15 @@ type HTTPServer struct {
 	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
 	// User        string        `yaml:"user" env-required:"true"`
 	// Password    string        `yaml:"password" env-required:"true" env:"HTTP_SERVER_PASSWORD"`
+}
+
+type Database struct {
+	Host     string `yaml:"host" env-default:"localhost"`
+	Port     string `yaml:"port" env-default:"5432"`
+	User     string `yaml:"user" env-required:"true"`
+	Password string `yaml:"password" env-required:"true"`
+	DBName   string `yaml:"db_name" env-required:"true"`
+	SSLMode  string `yaml:"ssl_mode" env-default:"disable"`
 }
 
 func MustLoad() *Config { // если конфиг не встал падаем

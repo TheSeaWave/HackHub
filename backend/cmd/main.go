@@ -2,6 +2,10 @@ package main
 
 import (
 	"HackHub/internal/config"
+	"HackHub/internal/db"
+	"HackHub/internal/lib/logger/sl"
+	"HackHub/internal/server"
+	"database/sql"
 	"log/slog"
 	"os"
 )
@@ -18,6 +22,30 @@ func main() { // CONFIG_PATH=./config/local.yaml go run ./cmd/main.go
 
 	log.Info("starting hackhub", slog.String("env", cfg.Env))
 	log.Debug("debug message are enabled")
+
+	// запуск сервера
+	srv := server.NewServer()
+
+	if err := srv.Run(":8082"); err != nil {
+		log.Error("Ошибка запуска сервера", sl.Err(err))
+	}
+
+	// Подключаемся к базе данных
+	dsn := "postgres://" + cfg.Database.User + ":" + cfg.Database.Password +
+		"@" + cfg.Database.Host + ":" + cfg.Database.Port +
+		"/" + cfg.Database.DBName + "?sslmode=" + cfg.Database.SSLMode
+
+	conn, err := sql.Open("pgx", dsn)
+	if err != nil {
+		log.Error("Failed to connect to the database", sl.Err(err))
+	}
+	defer conn.Close()
+
+	// Инициализируем базу данных
+	db.InitializeDatabase(conn, "./internal/db/init.sql")
+
+	log.Error("Service is running on", sl.Err(err))
+
 	// TODO: Main development tasks
 
 	// 1. API Endpoints
