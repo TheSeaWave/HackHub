@@ -1,32 +1,134 @@
-<html lang="js">
+<script lang="ts">
+    import { onMount } from 'svelte';
+    
+    let firstName: string = 'Не задано';
+    let lastName: string = 'Не задано';
+    let patronymic: string = 'Не задано';
+    let group: string = 'Не задано';
+    let telegram: string = 'Не задано';
+    let role: string = 'Не задано';
+    let techStack: string[] = [];
+    let otherTech: string = 'Не задано';
+    let about: string = 'Не задано';
+    let achievements: string = 'Не задано';
+    let isFound: boolean = false;
+  
+    const roles = ['Бэкенд', 'ML/DS/AI', 'Фронтенд', 'Дизайн', 'Product/Project', 'Аналитик'];
+    const technologies = ['React', 'Vue', 'Svelte', 'Node.js', 'Python', 'Java'];
+  
+    async function fetchUserProfile() {
+        try {
+            const response = await fetch('https://your-service.com/api/user-profile');
+            if (!response.ok) {
+                throw new Error('Error fetching user profile');
+            }
+  
+            const data = await response.json();
+            
+            firstName = data.firstName || '';
+            lastName = data.lastName || '';
+            patronymic = data.patronymic || '';
+            group = data.group || '';
+            telegram = data.telegram || '';
+            role = data.role || '';
+            techStack = data.techStack || [];
+            otherTech = data.otherTech || '';
+            about = data.about || '';
+            achievements = data.achievements || '';
+            isFound = data.isFound || false;
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.error('Failed to fetch user profile:', error.message);
+            } else {
+                console.error('An unknown error occurred');
+            }
+        }
+    }
+  
+    onMount(() => {
+        fetchUserProfile();
+    });
+  
+    async function submitProfile() {
+        const profileData = {
+            firstName,
+            lastName,
+            patronymic,
+            group,
+            telegram,
+            role,
+            techStack,
+            otherTech,
+            about,
+            achievements,
+            isFound,
+        };
+  
+        try {
+            const response = await fetch('/api/update-profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(profileData),
+            });
+  
+            if (!response.ok) {
+                throw new Error('Error updating profile');
+            }
+  
+            alert('Profile updated successfully!');
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                alert('Error updating profile: ' + error.message);
+            } else {
+                alert('Error updating profile: Unknown error');
+            }
+        }
+    }
+</script>
 
-<body>
-
-    <div class=container2>
-    <div  class="naming1"><a href="/main">hack.itam</a></div>
+<svelte:head>
+<style class="header"></style>
+<div class=container2>
+    <div><h1><p class=naming1>hack.itam</p></h1></div>
     <div><h2><p class=hrefComands>команды</p></h2></div>
     <div><h2><p class=hrefNews>новости</p></h2></div>
     <div><h2><p class=hrefProfile>профиль</p></h2></div>
     <div><h2><p class=hrefHacks>хакатоны</p></h2></div>
     <div><h2><p class=hrefAnkets>анкеты</p></h2></div>
     <div class=notific><button class=notific1></button>
-    <ul>
-        <li>В Вашей команде изменился статус капитана</li>
-        <li>Ваша заявка на присоединение к команде отклонена</li>
-        <li> Вы стали капитаном команды</li>
-        <li>Павел Волков отправил заявку на присоединение к Вашей команде</li>
-        <li>Павел Волков приглашает Вас в свою команду</li>
-        <li>Павел Волков присоединлся к Вашей команде</li>
-    </ul></div>
-</div>
-
-
+        </div>
+        </div>
+</svelte:head>
+    <body>
+<div class="profile">
     <div class=backgr1>
-    <img src="/backgr1.png"alt="" style="max-width: 100%;">
-    </div>
-    <div class="container1">
-    <div class="name">
-        <form on:submit|preventDefault={submitForm}>
+        <img src="/backgr1.png"alt="" style="max-width: 100%;">
+        </div>
+        <div class=backgr2>
+            <img src="/backgr3.png"alt="" style="max-width: 100%;">
+            </div>
+        <div class="title">ВАШ ПРОФИЛЬ</div>
+        <div class="container1">
+            
+        <div class="name">
+    <p><span class="all_label">Имя:</span><span class="all_info">{firstName}</span></p>
+    <p><span class="all_label">Фамилия:</span> <span class="all_info">{lastName}</span></p>
+    <p><span class="all_label">Отчество:</span> <span class="all_info">{patronymic}</span></p>
+    <p><span class="all_label">Группа:</span> <span class="all_info">{group}</span></p>
+    <p><span class="all_label">Роль:</span><span class="all_info">{role}</span></p>
+    <p><span class="all_label">Технологии:</span> <span class="all_info">{techStack.join(', ')}</span></p>
+    <p><span class="all_label">Другие технологии:</span> <span class="all_info">{otherTech}</span></p>
+    <p><span class="all_label">О себе:</span> <span class="all_info">{about}</span></p>
+    <p><span class="all_label">Достижения:</span> <span class="all_info">{achievements}</span></p>
+    <p><span class="all_label">Ищу команду:</span> <span class="all_info">{isFound ? 'Да' : 'Нет'}</span></p>
+
+    <div class="button11">
+        <button class="button12" type="submit">РЕДАКТИРОВАТЬ АНКЕТУ</button>
+        </div>
+
+        <form on:submit|preventDefault={submitProfile}>
             
             
             <div>
@@ -92,53 +194,72 @@
                     <option value={true}>Да</option>
                 </select>
             </div>
-    
+
     
     <div class="button11">
-    <button class="button12" type="submit">Отправить</button>
+    <button class="button12" type="submit">Сохранить изменения</button>
 </form>
-
-    </div>
+</div>
+</div>
 </div>
 </body>
 <footer>
     <div class=containerFooter>
-    <div class=footer1><p>© 2024</p></div>
-    <div class=footer2><p>hack.itam</p></div>
-    </div>
+        <div class=footer1><p>© 2024</p></div>
+        <div class=footer2><p>hack.itam</p></div>
+        </div>
 </footer>
-</html>
 
 <style>
-    .notific ul{
-        color: white;
-        position: absolute;
-        display: none;
-        width: 20vw;
-        margin-right: 10vw;
-    }
-    .notific ul li{
-        display:block;
-    }
-.notific1:hover{
-    background-color:grey;
-
-}
-header .notific:hover ul{
+  .title{
+    position: absolute;
+    z-index: 2;
+    font-size: 4vw;
+    font-family: "Russo One", sans-serif;
+    font-weight: 50;
+    font-style: normal;
+    color: #ffffff;
+    margin-left: 27vw;
+    margin-top: 10vw;
+  }
+.header{
     display: block;
 }
 .container1{
     position: relative;
     width: 50vw;
-    height: 85vw;
+    height: 155vw;
     background: rgba(0, 0, 0, 0.3);
     z-index: 2;
     margin-left: 25vw;
-    margin-top: 10vw;
+    margin-top: 17vw;
     border-radius: 3vw;
     border: 0.3vw solid black;
 }
-
+.all_label{
+    display: block;
+    text-align: left;
+    font-family: "Roboto Flex", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 300;
+    font-style: normal;
+    margin-bottom: 1vw;
+    margin-top: 1vw;
+    margin-left: 1vw;
+    font-size: 2vw;
+}
+.all_info{
+    display: block;
+    text-align: left;
+    font-family: "Roboto Flex", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 100;
+    font-style: normal;
+    margin-bottom: 1vw;
+    margin-top: 1vw;
+    margin-left: 1vw;
+    font-size: 2vw;
+}
 body {
     display: flex;
     flex-direction: column;
@@ -148,36 +269,8 @@ body {
 label{
     color: white;
 }
-footer{
-    background-color: #000000;
-    width: 100%;
-    margin-top: 30vw;
-}
-.containerFooter{
-    display: flex;
-    position: relative;
-    margin-bottom: 0;
-}
-.footer1{
-    font-weight: 100;
-    font-size: 2vw;
-    margin-left: 5vw;
-}
 
-.footer2{
-    font-weight: 300;
-    font-size: 2vw;
-    margin-left: auto;
-    margin-right: 4vw;
-    
-}
-.footer1, .footer2{
-    color:white;
-    font-family: "Roboto Flex", sans-serif;
-    font-optical-sizing: auto;
-    font-style: normal;
-    margin-bottom: 4vw;
-}
+
 .backgr1 {
     width: 100%;
     margin-left: 0%;
@@ -187,7 +280,14 @@ footer{
     margin-top: -2vw;
 
 }
-    
+.backgr2 {
+    width: 97vw;
+    margin-left: 0vw;
+    margin-right: 50vw;
+    position: absolute;
+    z-index: 1;
+    margin-top: 130vw;
+}
 .container2{
     display: flex;
     z-index: 2;
@@ -229,6 +329,7 @@ footer {
     height: 1%; 
     width: 100%;
     background-color: #000000;
+    margin-top: 10vw;
 }
 
 .notific1{
@@ -308,11 +409,10 @@ p{
     resize: none;
 }
 
-.button11{
-    position:absolute;
-    z-index: 2;
-    margin-top: 74vw;
+.button11{    
     margin-left: 2vw;
+    margin-top: 3vw;
+    margin-bottom: 2vw;
 }
 
 .button12{
@@ -327,54 +427,35 @@ p{
     font-weight: 400;
     font-style: normal;
 }
+footer{
+    background-color: #000000;
+    width: 100%;
+    
+} 
+.containerFooter{
+    display: flex;
+    position: relative;
+    margin-bottom: 0;
+}
+.footer1{
+    font-weight: 100;
+    font-size: 2vw;
+    margin-left: 5vw;
+}
+
+.footer2{
+    font-weight: 300;
+    font-size: 2vw;
+    margin-left: auto;
+    margin-right: 4vw;
+    
+}
+.footer1, .footer2{
+    color:white;
+    font-family: "Roboto Flex", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    margin-bottom: 4vw;
+}
 
 </style>
-
-
-<script lang="ts">
-    let firstName = '';
-    let lastName = '';
-    let patronymic = '';
-    let group = '';
-    let telegram = '';
-    let role = '';
-    let techStack: string[] = [];  
-    let otherTech = '';
-    let about = '';
-    let achievements = '';
-    let isFound = false;  
-  
-    const roles = ['Бэкенд', 'ML/DS/AI', 'Фронтенд', 'Дизайн', 'Product/Project', 'Аналитик'];
-    const technologies = ['React', 'Vue', 'Svelte', 'Node.js', 'Python', 'Java'];
-  
-    async function submitForm() {
-      const formData = {
-        firstName,
-        lastName,
-        patronymic,
-        group,
-        telegram,
-        role,
-        techStack,
-        otherTech,
-        about,
-        achievements,
-        isFound,
-      };
-  
-      const response = await fetch('https://your-service.com/api/submit-form', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-  
-      const result = await response.json();
-      if (response.ok) {
-        alert('Анкета создана');
-      } else {
-        alert('Ошибка при создании анкеты:' + result.message);
-      }
-    }
-  </script>
