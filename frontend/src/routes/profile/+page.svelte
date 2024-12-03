@@ -88,8 +88,8 @@
     }
 </script>
 
-<svelte:head>
-<style class="header"></style>
+<header>
+
 <div class=container2>
     <div><h1><p class=naming1>hack.itam</p></h1></div>
     <div><h2><p class=hrefComands>команды</p></h2></div>
@@ -100,7 +100,7 @@
     <div class=notific><button class=notific1></button>
         </div>
         </div>
-</svelte:head>
+    </header>
     <body>
 <div class="profile">
     <div class=backgr1>
@@ -222,7 +222,7 @@
     margin-left: 27vw;
     margin-top: 10vw;
   }
-.header{
+header{
     display: block;
 }
 .container1{
