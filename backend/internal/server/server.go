@@ -1,12 +1,50 @@
 package server
 
 import (
+	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
+
+// Структура команды
+type Team struct {
+	ID          int       `json:"id"`
+	Name        string    `json:"name" binding:"required"`
+	Description string    `json:"description" binding:"required"`
+	CaptainID   int       `json:"captain_id" binding:"required"`
+	Avatar      string    `json:"avatar" binding:"required,url"`
+	Members     []Member  `json:"members"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type Member struct {
+	FullName string `json:"full_name" binding:"required"`
+	Role     string `json:"role" binding:"required"`
+	Telegram string `json:"telegram" binding:"required"`
+}
+
+var teams []Team
+var teamID = 1
+
+// Структуры и переменные:
+type User struct {
+	ID             int    `json:"id"`
+	Email          string `json:"email" binding:"required,email"`
+	PasswordHash   string `json:"-"`
+	Name           string `json:"name" binding:"required"`
+	ProfilePicture string `json:"profile_picture"`
+}
+
+var users []User
+var userID = 1
+
+var jwtSecret = []byte("supersecretkey") // Секрет для подписи JWT
 
 // Survey представляет анкету участника.
 type Survey struct {
@@ -23,6 +61,9 @@ type Survey struct {
 	Avatar        string    `json:"avatar" binding:"required,url"`
 	Teams         []string  `json:"teams" binding:"required"`
 	LastUpdated   time.Time `json:"last_updated"`
+	Rating        int       `json:"Rating"`
+	Experience    int       `json:"Experience"`
+	Like          int       `json:"Like"`
 }
 
 var (
@@ -53,6 +94,9 @@ func (s *Server) routes() {
 	s.router.GET("/surveys", s.getSurveys)
 	s.router.PUT("/surveys/:id", s.updateSurvey)
 	s.router.DELETE("/surveys/:id", s.deleteSurvey)
+	s.authRoutes()
+	s.teamRoutes()
+
 }
 
 // Run запускает сервер на указанном адресе.
@@ -71,6 +115,7 @@ func (s *Server) createSurvey(c *gin.Context) {
 
 	newSurvey.ID = nextID
 	newSurvey.LastUpdated = time.Now().UTC()
+	newSurvey.Rating = calculateRating(newSurvey)
 	nextID++
 
 	surveys = append(surveys, newSurvey)
@@ -168,4 +213,176 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+func (s *Server) authRoutes() {
+	s.router.POST("/auth/register", s.registerUser)
+	s.router.POST("/auth/login", s.loginUser)
+	s.router.GET("/auth/me", s.authMiddleware, s.getCurrentUser)
+}
+
+func (s *Server) registerUser(c *gin.Context) {
+	var newUser User
+	if err := c.ShouldBindJSON(&newUser); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	for _, user := range users {
+		if user.Email == newUser.Email {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Email уже зарегистрирован"})
+			return
+		}
+	}
+
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(newUser.PasswordHash), bcrypt.DefaultCost)
+	newUser.PasswordHash = string(passwordHash)
+	newUser.ID = userID
+	userID++
+	users = append(users, newUser)
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Пользователь успешно зарегистрирован"})
+}
+
+func (s *Server) loginUser(c *gin.Context) {
+	var credentials struct {
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&credentials); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	for _, user := range users {
+		if user.Email == credentials.Email {
+			if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(credentials.Password)); err == nil {
+				token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+					"userID": user.ID,
+					"exp":    time.Now().Add(time.Hour * 24).Unix(),
+				})
+				tokenString, _ := token.SignedString(jwtSecret)
+
+				c.JSON(http.StatusOK, gin.H{"token": tokenString})
+				return
+			}
+		}
+	}
+
+	c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный email или пароль"})
+}
+
+func (s *Server) getCurrentUser(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	for _, user := range users {
+		if user.ID == userID {
+			c.JSON(http.StatusOK, user)
+			return
+		}
+	}
+
+	c.JSON(http.StatusNotFound, gin.H{"error": "Пользователь не найден"})
+}
+
+func (s *Server) authMiddleware(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" || len(authHeader) <= 7 || authHeader[:7] != "Bearer " {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Требуется аутентификация"})
+		c.Abort()
+		return
+	}
+
+	tokenString := authHeader[7:]
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("неверный метод подписи")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный токен: " + err.Error()})
+		c.Abort()
+		return
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		c.Set("userID", int(claims["userID"].(float64)))
+	} else {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный токен"})
+		c.Abort()
+	}
+}
+
+func (s *Server) teamRoutes() {
+	s.router.POST("/teams", s.createTeam)
+	s.router.GET("/teams/:id", s.getTeam)
+}
+
+func (s *Server) createTeam(c *gin.Context) {
+	var newTeam Team
+	if err := c.ShouldBindJSON(&newTeam); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	newTeam.ID = teamID
+	newTeam.CreatedAt = time.Now().UTC()
+	teamID++
+	teams = append(teams, newTeam)
+
+	c.JSON(http.StatusCreated, gin.H{
+		"id":      newTeam.ID,
+		"message": "Команда успешно создана",
+	})
+}
+
+func (s *Server) getTeam(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный ID команды"})
+		return
+	}
+
+	for _, team := range teams {
+		if team.ID == id {
+			c.JSON(http.StatusOK, team)
+			return
+		}
+	}
+
+	c.JSON(http.StatusNotFound, gin.H{"error": "Команда не найдена"})
+}
+
+func calculateRating(survey Survey) int {
+	rating := 0.0
+
+	// Условие для новичков
+	if survey.Experience < 1 && len(survey.Achievements) > 1 {
+		rating += 5.0
+	}
+
+	// Рассчитываем рейтинг для остальных пользователей
+	if survey.Experience > 0 {
+		achievementsCount := float64(len(survey.Achievements))
+		stackCount := float64(len(survey.Stack))
+		experience := float64(survey.Experience)
+		likeCount := float64(survey.Like)
+
+		// Основная формула
+		r := (0.5 * stackCount) +
+			(4.0 * (achievementsCount / experience)) +
+			(0.25 * likeCount)
+
+		// Условие для начинающих пользователей с малым опытом и достижениями
+		if (achievementsCount/experience) < 2 && experience < 2 {
+			r *= 2.0
+		}
+
+		rating += r
+	}
+
+	// Округление результата до ближайшего целого числа
+	return int(math.Round(rating))
 }
