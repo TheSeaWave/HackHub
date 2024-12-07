@@ -2,12 +2,12 @@ package main
 
 import (
 	"HackHub/internal/config"
-	"HackHub/internal/db"
+	"HackHub/internal/lib/logger/handlers/slogpretty"
 	"HackHub/internal/lib/logger/sl"
 	"HackHub/internal/server"
-	"database/sql"
-	"log/slog"
 	"os"
+
+	"golang.org/x/exp/slog"
 )
 
 const (
@@ -16,6 +16,7 @@ const (
 	envProd  = "prod"
 )
 
+// PostgreSQL
 func main() { // CONFIG_PATH=./config/local.yaml go run ./cmd/main.go
 	cfg := config.MustLoad()
 	log := setupLogger(cfg.Env)
@@ -23,28 +24,17 @@ func main() { // CONFIG_PATH=./config/local.yaml go run ./cmd/main.go
 	log.Info("starting hackhub", slog.String("env", cfg.Env))
 	log.Debug("debug message are enabled")
 
+	if err := server.InitDB(); err != nil {
+		panic(err)
+	}
+	defer server.CloseDB()
+
 	// запуск сервера
 	srv := server.NewServer()
 
 	if err := srv.Run(":8082"); err != nil {
 		log.Error("Ошибка запуска сервера", sl.Err(err))
 	}
-
-	// Подключаемся к базе данных
-	dsn := "postgres://" + cfg.Database.User + ":" + cfg.Database.Password +
-		"@" + cfg.Database.Host + ":" + cfg.Database.Port +
-		"/" + cfg.Database.DBName + "?sslmode=" + cfg.Database.SSLMode
-
-	conn, err := sql.Open("pgx", dsn)
-	if err != nil {
-		log.Error("Failed to connect to the database", sl.Err(err))
-	}
-	defer conn.Close()
-
-	// Инициализируем базу данных
-	db.InitializeDatabase(conn, "./internal/db/init.sql")
-
-	log.Error("Service is running on", sl.Err(err))
 
 	// TODO: Main development tasks
 
@@ -93,9 +83,7 @@ func setupLogger(env string) *slog.Logger { // здесь прописывает
 
 	switch env {
 	case envLocal:
-		log = slog.New(
-			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
+		log = setupPrettySlog()
 	case envDev:
 		log = slog.New(
 			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
@@ -111,4 +99,15 @@ func setupLogger(env string) *slog.Logger { // здесь прописывает
 	}
 
 	return log
+}
+func setupPrettySlog() *slog.Logger {
+	opts := slogpretty.PrettyHandlerOptions{
+		SlogOpts: &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	}
+
+	handler := opts.NewPrettyHandler(os.Stdout)
+
+	return slog.New(handler)
 }
