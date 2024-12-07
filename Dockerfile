@@ -1,21 +1,33 @@
-# Указываем базовый образ
-FROM golang:1.21-alpine
+FROM node:21-alpine AS builder
 
-# Устанавливаем зависимости
-RUN apk add --no-cache git
-
-# Устанавливаем рабочую директорию
-WORKDIR /cmd
-
-# Копируем модули и устанавливаем зависимости
-COPY go.mod go.sum ./
-RUN go mod download
-
-# Копируем исходный код
+WORKDIR /app
+COPY package.json .
+COPY package-lock.json .
+RUN npm ci
 COPY . .
+RUN npm run build
 
-# Компилируем приложение
-RUN go build -o main ./cmd/main.go
+FROM node:21-alpine AS production
 
-# Определяем команду для запуска
-CMD ["CONFIG_PATH=./config/local.yaml go run ./cmd/main.go"]
+WORKDIR /app
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/node_modules ./node_modules
+COPY package.json .
+CMD ["node", "./build"]
+
+#
+# server-builder (CGO is required)
+#
+
+FROM golang:alpine as server-builder
+
+ENV CGO_ENABLED=1
+RUN apk add build-base
+
+WORKDIR /app
+
+COPY backend /app/backend
+COPY go.* /app
+COPY *.go /app
+
+RUN go build -buildvcs=false -mod=readonly -v
