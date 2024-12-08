@@ -7,6 +7,7 @@ import (
 	"HackHub/backend/pkg/server"
 	"os"
 
+	_ "github.com/gin-contrib/static"
 	"golang.org/x/exp/slog"
 )
 

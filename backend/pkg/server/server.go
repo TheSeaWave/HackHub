@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -87,10 +89,19 @@ func NewServer() *Server {
 
 	server.routes()
 
-	// serve static files
-	r.Use(static.Serve("/", static.LocalFile("./build", true)))
-	r.NoRoute(func(c *gin.Context) { // fallback
-		c.File("./build/index.html")
+	// Определяем абсолютный путь к папке build
+	wd, err := os.Getwd() // получаем рабочую директорию
+	if err != nil {
+		panic("Не удалось получить рабочую директорию: " + err.Error())
+	}
+	buildPath := filepath.Join(wd, "build")
+
+	// Подключаем статические файлы
+	r.Use(static.Serve("/", static.LocalFile(buildPath, true)))
+
+	// Fallback для SPA
+	r.NoRoute(func(c *gin.Context) {
+		c.File(filepath.Join(buildPath, "index.html"))
 	})
 	return server
 }
