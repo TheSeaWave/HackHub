@@ -1,3 +1,14 @@
+<script>
+    import { onMount } from 'svelte';
+    
+    onMount(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/regist';
+        }
+    });
+</script>
+
 <header>
     <div class=containerHeader>
     <div><p class=naming1>hack.itam</p></div>
@@ -15,6 +26,7 @@
     <div class=backgr2>
     <img src="/backgr3.png"alt="" style="max-width: 100%;">
     </div>
+    
     <div class=text1><p>НАЙДИ СВОЮ КОМАНДУ</p></div>
     <div class=mainButton><button class=mainButton1>ЗАПОЛНИТЬ АНКЕТУ</button></div>
     <div class=text2><p>ЧТО ТАКОЕ ХАКАТОН?</p></div> 
@@ -24,6 +36,7 @@
     <div class=text6><p>КАКАЯ ПОЛЬЗА ДЛЯ ТЕБЯ?</p></div> 
     <div class=text7><p>Хакатоны помогают участникам развивать навыки, работать в командах и улучшать коммуникацию. Они стимулируют креативное мышление и позволяют экспериментировать с новыми технологиями. Участники создают проекты, которые можно добавить в портфолио, а также налаживают контакты с единомышленниками и работодателями, что способствует личному и профессиональному росту. </p></div>
 </div>
+
 </body>
 
 <footer>

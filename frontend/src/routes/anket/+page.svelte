@@ -10,14 +10,7 @@
     <div><h2><p class=hrefHacks>хакатоны</p></h2></div>
     <div><h2><p class=hrefAnkets>анкеты</p></h2></div>
     <div class=notific><button class=notific1></button>
-    <ul>
-        <li>В Вашей команде изменился статус капитана</li>
-        <li>Ваша заявка на присоединение к команде отклонена</li>
-        <li> Вы стали капитаном команды</li>
-        <li>Павел Волков отправил заявку на присоединение к Вашей команде</li>
-        <li>Павел Волков приглашает Вас в свою команду</li>
-        <li>Павел Волков присоединлся к Вашей команде</li>
-    </ul></div>
+    </div>
 </div>
 
 
@@ -110,23 +103,12 @@
 </html>
 
 <style>
-    .notific ul{
-        color: white;
-        position: absolute;
-        display: none;
-        width: 20vw;
-        margin-right: 10vw;
-    }
-    .notific ul li{
-        display:block;
-    }
+   
 .notific1:hover{
     background-color:grey;
 
 }
-header .notific:hover ul{
-    display: block;
-}
+
 .container1{
     position: relative;
     width: 50vw;

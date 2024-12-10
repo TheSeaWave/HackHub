@@ -1,87 +1,79 @@
-<script lang="ts">
-    import { onMount } from 'svelte';
-    
+<body>
+ 
 
-    let firstName: string = '';
-    let lastName: string = '';
-    let patronymic: string = '';
-    let group: string = '';
-    let role: string = '';
-    let techStack: string[] = [];
-    let otherTech: string = '';
-    let about: string = '';
-    let achievements: string = '';
-    let isCommander: boolean = false;
-  
-    const roles = ['Student', 'Junior', 'Middle', 'Senior'];
-    const technologies = ['React', 'Vue', 'Svelte', 'Node.js', 'Python', 'Java'];
-  
-    async function fetchUserProfile() {
-      try {
-        const response = await fetch('/api/user-profile');
-        if (!response.ok) {
-          throw new Error('Error fetching user profile');
-        }
-  
-        const data = await response.json();
-        
-        firstName = data.firstName || '';
-        lastName = data.lastName || '';
-        patronymic = data.patronymic || '';
-        group = data.group || '';
-        role = data.role || '';
-        techStack = data.techStack || [];
-        otherTech = data.otherTech || '';
-        about = data.about || '';
-        achievements = data.achievements || '';
-        isCommander = data.isCommander || false;
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error('Failed to fetch user profile:', error.message);
-        } else {
-          console.error('An unknown error occurred');
-        }
-      }
-    }
-  
-    onMount(() => {
-      fetchUserProfile();
-    });
-  
-    async function submitProfile() {
-      const profileData = {
-        firstName,
-        lastName,
-        patronymic,
-        group,
-        role,
-        techStack,
-        otherTech,
-        about,
-        achievements,
-        isCommander,
-      };
-  
-      try {
-        const response = await fetch('/api/update-profile', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(profileData),
+<form on:submit|preventDefault={submitTeamForm}>
+  <div>
+      <label for="teamName">Название команды:</label>
+      <input id="teamName" bind:value={teamName} required />
+  </div>
+
+  <div>
+      <label for="teamDescription">Описание команды:</label>
+      <textarea id="teamDescription" bind:value={teamDescription}></textarea>
+  </div>
+
+  <div>
+      <label for="teamMembers">Участники команды (по ID):</label>
+      <input 
+          type="text" 
+          id="teamMembers" 
+          bind:value={teamMembersInput}
+          placeholder="Введите ID участников через запятую" 
+      />
+  </div>
+
+  <div class="button11">
+      <button type="submit">Создать команду</button>
+  </div>
+</form>
+
+</body>
+
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    background-color: #000000;
+}
+
+
+</style>
+
+<script>
+  let teamName = '';
+let teamDescription = '';
+let teamMembersInput = '';  // Поле для ввода ID участников
+
+async function submitTeamForm() {
+    // Разделяем введенные ID участников по запятой
+    const teamMembers = teamMembersInput.split(',').map(id => id.trim());
+
+    // Пример данных команды
+    const teamData = {
+        teamName,
+        teamDescription,
+        teamMembers,  // Список ID участников
+    };
+
+    try {
+        const response = await fetch('https://your-api.com/api/teams', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(teamData),
         });
-  
-        if (!response.ok) {
-          throw new Error('Error updating profile');
-        }
-  
-        alert('Profile updated successfully!');
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          alert('Error updating profile: ' + error.message);
+
+        const result = await response.json();
+        if (response.ok) {
+            alert('Команда создана');
         } else {
-          alert('Error updating profile: Unknown error');
+            alert('Ошибка при создании команды: ' + result.message);
         }
-      }
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка соединения');
     }
-  </script>
+}
+
+</script>

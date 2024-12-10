@@ -12,7 +12,7 @@
     let about: string = 'Не задано';
     let achievements: string = 'Не задано';
     let isFound: boolean = false;
-  
+    let isEditModalOpen: boolean = false;
     const roles = ['Бэкенд', 'ML/DS/AI', 'Фронтенд', 'Дизайн', 'Product/Project', 'Аналитик'];
     const technologies = ['React', 'Vue', 'Svelte', 'Node.js', 'Python', 'Java'];
   
@@ -86,6 +86,9 @@
             }
         }
     }
+    function closeEditModal() {
+        isEditModalOpen = false;
+    }
 </script>
 
 <header>
@@ -106,9 +109,7 @@
     <div class=backgr1>
         <img src="/backgr1.png"alt="" style="max-width: 100%;">
         </div>
-        <div class=backgr2>
-            <img src="/backgr3.png"alt="" style="max-width: 100%;">
-            </div>
+       
         <div class="title">ВАШ ПРОФИЛЬ</div>
         <div class="container1">
             
@@ -124,12 +125,15 @@
     <p><span class="all_label">Достижения:</span> <span class="all_info">{achievements}</span></p>
     <p><span class="all_label">Ищу команду:</span> <span class="all_info">{isFound ? 'Да' : 'Нет'}</span></p>
 
-    <div class="button11">
-        <button class="button12" type="submit">РЕДАКТИРОВАТЬ АНКЕТУ</button>
+   
+        <div class="button11">
+            <button class="button12" on:click={() => isEditModalOpen = true}>РЕДАКТИРОВАТЬ АНКЕТУ</button>
         </div>
-
-        <form on:submit|preventDefault={submitProfile}>
-            
+        {#if isEditModalOpen}
+        <div class="modal">
+            <div class="modal-content">
+                <button class="close" on:click={closeEditModal}>X</button>
+                <form on:submit|preventDefault={submitProfile}>  
             
             <div>
                 <label class="lastName_label" for="lastName">Фамилия:</label>
@@ -196,11 +200,13 @@
             </div>
 
     
-    <div class="button11">
-    <button class="button12" type="submit">Сохранить изменения</button>
-</form>
+            <div class="button11">
+                <button class="button12" type="submit">Сохранить изменения</button>
+            </div>
+        </form>
+    </div>
 </div>
-</div>
+{/if}
 </div>
 </body>
 <footer>
@@ -211,6 +217,51 @@
 </footer>
 
 <style>
+    .modal {
+
+        position: fixed;
+
+  width: 60vw;
+  top: 15vw;
+  bottom: 10vw;
+  left: 22vw;
+  border: none;
+
+  padding: 0;
+  color: #000000;
+  text-align: center;
+  display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      border-radius: 3vw;
+    border: 0.3vw solid black;
+    max-height: 100vw; 
+    overflow-y: auto; 
+  }
+  .modal-content {
+    
+    background: rgba(0, 0, 0, 0.8);
+      padding: 4vw; 
+      width: 100%;
+      overflow: hidden;
+max-height: 70vw;
+     
+  }
+  .close {
+      position: absolute;
+      top: 1vw;
+      right: 1.3vw;
+      background: rgb(61, 57, 57);
+      color: white;
+      border: none;
+      padding: 0.3vw;
+      cursor: pointer;
+      width: 3vw;
+      height: 3vw;
+      text-align: center;
+      z-index: 2;
+  }
   .title{
     position: absolute;
     z-index: 2;
@@ -228,27 +279,21 @@ header{
 .container1{
     position: relative;
     width: 50vw;
-    height: 155vw;
     background: rgba(0, 0, 0, 0.3);
     z-index: 2;
     margin-left: 25vw;
     margin-top: 17vw;
     border-radius: 3vw;
     border: 0.3vw solid black;
+    min-height: 70vw; 
+      height: auto; 
+
 }
 .all_label{
-    display: block;
-    text-align: left;
-    font-family: "Roboto Flex", sans-serif;
-    font-optical-sizing: auto;
     font-weight: 300;
-    font-style: normal;
-    margin-bottom: 1vw;
-    margin-top: 1vw;
-    margin-left: 1vw;
-    font-size: 2vw;
 }
-.all_info{
+
+.all_info, .all_label{
     display: block;
     text-align: left;
     font-family: "Roboto Flex", sans-serif;
@@ -270,7 +315,6 @@ label{
     color: white;
 }
 
-
 .backgr1 {
     width: 100%;
     margin-left: 0%;
@@ -280,14 +324,7 @@ label{
     margin-top: -2vw;
 
 }
-.backgr2 {
-    width: 97vw;
-    margin-left: 0vw;
-    margin-right: 50vw;
-    position: absolute;
-    z-index: 1;
-    margin-top: 130vw;
-}
+
 .container2{
     display: flex;
     z-index: 2;
@@ -430,6 +467,7 @@ p{
 footer{
     background-color: #000000;
     width: 100%;
+    margin-top: 30vw;
     
 } 
 .containerFooter{
