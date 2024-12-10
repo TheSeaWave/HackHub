@@ -4,10 +4,13 @@ import (
 	"HackHub/backend/pkg/config"
 	"HackHub/backend/pkg/lib/logger/handlers/slogpretty"
 	"HackHub/backend/pkg/lib/logger/sl"
+	database "HackHub/backend/pkg/repository"
 	"HackHub/backend/pkg/server"
+	"database/sql"
 	"os"
 
 	_ "github.com/gin-contrib/static"
+	"github.com/joho/godotenv"
 	"golang.org/x/exp/slog"
 )
 
@@ -17,7 +20,7 @@ const (
 	envProd  = "prod"
 )
 
-// PostgreSQL
+// PostgreSQL sudo -u postgres psql
 func main() { // CONFIG_PATH=./backend/config/local.yaml go run ./main.go
 	cfg := config.MustLoad()
 	log := setupLogger(cfg.Env)
@@ -25,13 +28,29 @@ func main() { // CONFIG_PATH=./backend/config/local.yaml go run ./main.go
 	log.Info("starting hackhub", slog.String("env", cfg.Env))
 	log.Debug("debug message are enabled")
 
-	if err := server.InitDB(); err != nil {
-		panic(err)
+	// Инициализация базы данных
+	dataSource := "user=postgres password=postgres dbname=postgres sslmode=disable"
+	database.InitDB(dataSource)
+	defer database.CloseDB()
+	// Загрузка переменных окружения
+	err := godotenv.Load()
+	if err != nil {
+		sl.Err(err)
 	}
-	defer server.CloseDB()
+
+	// Получение строки подключения к БД и JWT-секрета
+	dbConn := os.Getenv("DB_CONN")
+	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
+	// Подключение к базе
+	connStr := "user=username dbname=yourdb sslmode=disable password=yourpassword"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		sl.Err(err)
+	}
+	defer db.Close()
 
 	// запуск сервера
-	srv := server.NewServer()
+	srv := server.NewServer(db, jwtSecret)
 
 	if err := srv.Run(":8082"); err != nil {
 		log.Error("Ошибка запуска сервера", sl.Err(err))
