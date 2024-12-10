@@ -34,11 +34,11 @@ var teamID = 1
 
 // Структуры и переменные:
 type User struct {
-	ID             int    `json:"id"`
-	Email          string `json:"email" binding:"required,email"`
-	PasswordHash   string `json:"-"`
-	Name           string `json:"name" binding:"required"`
-	ProfilePicture string `json:"profile_picture"`
+	ID           int    `json:"id"`
+	Name         string `json:"name" binding:"required"`
+	Email        string `json:"email" binding:"required,email"`
+	Password     string `json:"password" binding:"required"`
+	PasswordHash string `json:"-"` // Для хранения хэша пароля
 }
 
 var users []User
@@ -224,7 +224,7 @@ func (s *Server) authRoutes() {
 func (s *Server) registerUser(c *gin.Context) {
 	var newUser User
 	if err := c.ShouldBindJSON(&newUser); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Некорректные данные: " + err.Error()})
 		return
 	}
 
@@ -235,13 +235,19 @@ func (s *Server) registerUser(c *gin.Context) {
 		}
 	}
 
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(newUser.PasswordHash), bcrypt.DefaultCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось сохранить пароль"})
+		return
+	}
+
 	newUser.PasswordHash = string(passwordHash)
+	newUser.Password = "" // Убираем пароль из ответа
 	newUser.ID = userID
 	userID++
 	users = append(users, newUser)
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Пользователь успешно зарегистрирован"})
+	c.JSON(http.StatusCreated, gin.H{"message": "Пользователь успешно зарегистрирован", "user": newUser})
 }
 
 func (s *Server) loginUser(c *gin.Context) {
@@ -251,18 +257,24 @@ func (s *Server) loginUser(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&credentials); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Некорректные данные: " + err.Error()})
 		return
 	}
 
 	for _, user := range users {
 		if user.Email == credentials.Email {
-			if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(credentials.Password)); err == nil {
+			err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(credentials.Password))
+			if err == nil {
 				token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 					"userID": user.ID,
 					"exp":    time.Now().Add(time.Hour * 24).Unix(),
 				})
-				tokenString, _ := token.SignedString(jwtSecret)
+
+				tokenString, err := token.SignedString(jwtSecret)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось создать токен"})
+					return
+				}
 
 				c.JSON(http.StatusOK, gin.H{"token": tokenString})
 				return
@@ -287,7 +299,7 @@ func (s *Server) getCurrentUser(c *gin.Context) {
 
 func (s *Server) authMiddleware(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" || len(authHeader) <= 7 || authHeader[:7] != "Bearer " {
+	if len(authHeader) <= 7 || authHeader[:7] != "Bearer " {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Требуется аутентификация"})
 		c.Abort()
 		return
@@ -308,7 +320,9 @@ func (s *Server) authMiddleware(c *gin.Context) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		c.Set("userID", int(claims["userID"].(float64)))
+		userID := int(claims["userID"].(float64))
+		c.Set("userID", userID)
+		c.Next()
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный токен"})
 		c.Abort()
