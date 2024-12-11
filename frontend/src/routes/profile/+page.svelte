@@ -92,13 +92,13 @@
 </script>
 
 
-<div class="container2">
-    <div><h1><p class="naming1">hack.itam</p></h1></div>
-    <div><h2><p class="hrefComands">команды</p></h2></div>
-    <div><h2><p class="hrefNews">новости</p></h2></div>
-    <div><h2><p class="hrefProfile">профиль</p></h2></div>
-    <div><h2><p class="hrefHacks">хакатоны</p></h2></div>
-    <div><h2><p class="hrefAnkets">анкеты</p></h2></div>
+<div class=container2>
+    <div  class="naming1"><a href="/">hack.itam</a></div>
+    <div class="hrefComands"><a href="/comands">команды</a></div>
+    <div class="hrefNews"><a href="/news">новости</a></div>
+    <div class="hrefProfile"><a href="/profile">профиль</a></div>
+    <div class="hrefHacks"><a href="/hacks">хакатоны</a></div>
+    <div class="hrefAnkets"><a href="/users">анкеты</a></div>
     <div class="notific"><button class="notific1"></button></div>
 </div>
 

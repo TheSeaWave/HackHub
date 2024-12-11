@@ -34,7 +34,7 @@
   </script>
   
 <div class=container2>
-    <div  class="naming1"><a href="/main">hack.itam</a></div>
+    <div  class="naming1"><a href="/">hack.itam</a></div>
     <div class="hrefComands"><a href="/comands">команды</a></div>
     <div class="hrefNews"><a href="/news">новости</a></div>
     <div class="hrefProfile"><a href="/profile">профиль</a></div>
