@@ -4,9 +4,11 @@ import (
 	"HackHub/internal/config"
 	"HackHub/internal/lib/logger/handlers/slogpretty"
 	"HackHub/internal/lib/logger/sl"
+	database "HackHub/internal/repository"
 	"HackHub/internal/server"
 	"os"
 
+	_ "github.com/gin-contrib/static"
 	"golang.org/x/exp/slog"
 )
 
@@ -16,6 +18,9 @@ const (
 	envProd  = "prod"
 )
 
+// docker-compose down
+// docker-compose up -d
+
 // PostgreSQL
 func main() { // CONFIG_PATH=./config/local.yaml go run ./cmd/main.go
 	cfg := config.MustLoad()
@@ -23,12 +28,10 @@ func main() { // CONFIG_PATH=./config/local.yaml go run ./cmd/main.go
 
 	log.Info("starting hackhub", slog.String("env", cfg.Env))
 	log.Debug("debug message are enabled")
-
-	if err := server.InitDB(); err != nil {
-		panic(err)
-	}
-	defer server.CloseDB()
-
+	// Инициализация базы данных
+	dataSource := "user=postgres password=postgres dbname=postgres sslmode=disable"
+	database.InitDB(dataSource)
+	defer database.CloseDB()
 	// запуск сервера
 	srv := server.NewServer()
 
