@@ -29,7 +29,7 @@
         isFound,
       };
   
-      const response = await fetch('https://your-service.com/api/submit-form', {
+      const response = await fetch('/api/surveys', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
