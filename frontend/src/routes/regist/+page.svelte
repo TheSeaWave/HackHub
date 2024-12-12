@@ -25,9 +25,9 @@
         });
         const data = await response.json();
         if (data.token) {
-            localStorage.setItem('token', data.token);  // Сохраняем токен в localStorage
+            localStorage.setItem('token', data.token);  
             message = 'Вы успешно вошли!';
-            window.location.href = '/main';
+            window.location.href = '/';
         } else {
             message = data.message;
         }
