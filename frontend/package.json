@@ -23,6 +23,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@sveltejs/adapter-node": "^5.2.2"
+		"@sveltejs/adapter-node": "^5.2.2",
+		"uuid": "^11.0.3"
 	}
 }

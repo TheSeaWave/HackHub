@@ -40,8 +40,8 @@ type Member struct {
 
 // Структуры и переменные:
 type User struct {
-	ID           int       `json:"id"`
-	Name         string    `json:"name" binding:"required"`
+	ID int `json:"id"`
+	// Name         string    `json:"name" binding:"required"`
 	Email        string    `json:"email" binding:"required,email"`
 	Password     string    `json:"password" binding:"required"`
 	PasswordHash string    `json:"-"` // Для хранения хэша пароля
@@ -113,13 +113,13 @@ func NewServer() *Server {
 
 // routes определяет маршруты для сервера.
 func (s *Server) routes() {
-	s.router.POST("/surveys", s.createSurvey)
-	s.router.GET("/surveys", s.getSurveys)
-	s.router.PUT("/surveys/:id", s.updateSurvey)
-	s.router.DELETE("/surveys/:id", s.deleteSurvey)
+	s.router.POST("/api/surveys", s.createSurvey)
+	s.router.GET("/api/surveys", s.getSurveys)
+	s.router.PUT("/api/surveys/:id", s.updateSurvey)
+	s.router.DELETE("/api/surveys/:id", s.deleteSurvey)
 	s.authRoutes()
 	s.teamRoutes()
-	s.router.GET("/health", s.healthCheck)
+	s.router.GET("/api/health", s.healthCheck)
 }
 
 // Run запускает сервер на указанном адресе.
@@ -271,9 +271,9 @@ func (s *Server) deleteSurvey(c *gin.Context) {
 // }
 
 func (s *Server) authRoutes() {
-	s.router.POST("/auth/register", s.registerUser)
-	s.router.POST("/auth/login", s.loginUser)
-	s.router.GET("/auth/me", s.getCurrentUser, s.authMiddleware)
+	s.router.POST("/api/auth/register", s.registerUser)
+	s.router.POST("/api/auth/login", s.loginUser)
+	s.router.GET("/api/auth/me", s.getCurrentUser, s.authMiddleware)
 }
 
 func (s *Server) registerUser(c *gin.Context) {
@@ -305,11 +305,11 @@ func (s *Server) registerUser(c *gin.Context) {
 
 	// Сохраняем пользователя в базу данных
 	query := `
-        INSERT INTO users (name, email, password_hash, created_at)
+        INSERT INTO users (email, password_hash, created_at)
         VALUES ($1, $2, $3, NOW()) RETURNING id;
     `
 	var newID int
-	err = database.DB.QueryRow(query, newUser.Name, newUser.Email, newUser.PasswordHash).Scan(&newID)
+	err = database.DB.QueryRow(query, newUser.Email, newUser.PasswordHash).Scan(&newID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при добавлении пользователя: " + err.Error()})
 		return
@@ -335,8 +335,8 @@ func (s *Server) loginUser(c *gin.Context) {
 
 	// Ищем пользователя в базе данных
 	var user User
-	query := `SELECT id, name, email, password_hash FROM users WHERE email = $1;`
-	err := database.DB.QueryRow(query, credentials.Email).Scan(&user.ID, &user.Name, &user.Email, &user.PasswordHash)
+	query := `SELECT id, email, password_hash FROM users WHERE email = $1;`
+	err := database.DB.QueryRow(query, credentials.Email).Scan(&user.ID, &user.Email, &user.PasswordHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный email или пароль"})
@@ -373,8 +373,8 @@ func (s *Server) getCurrentUser(c *gin.Context) {
 	}
 
 	var user User
-	query := `SELECT id, name, email, created_at FROM users WHERE id = $1;`
-	err := database.DB.QueryRow(query, userID).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt)
+	query := `SELECT id, email, created_at FROM users WHERE id = $1;`
+	err := database.DB.QueryRow(query, userID).Scan(&user.ID, &user.Email, &user.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Пользователь не найден"})
@@ -423,8 +423,8 @@ func (s *Server) authMiddleware(c *gin.Context) {
 
 // 123
 func (s *Server) teamRoutes() {
-	s.router.POST("/teams", s.createTeam)
-	s.router.GET("/teams/:id", s.getTeam)
+	s.router.POST("/api/teams", s.createTeam)
+	s.router.GET("/api/teams/:id", s.getTeam)
 }
 
 func (s *Server) createTeam(c *gin.Context) {

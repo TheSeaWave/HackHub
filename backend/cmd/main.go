@@ -19,7 +19,10 @@ const (
 )
 
 // docker-compose down
-// docker-compose up -d
+// docker-compose up --build -d
+
+// docker exec -it postgres_container bash
+// psql -U postgres -d postgres
 
 // PostgreSQL
 func main() { // CONFIG_PATH=./config/local.yaml go run ./cmd/main.go
